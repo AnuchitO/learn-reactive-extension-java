@@ -1,56 +1,34 @@
 package com.gable.test;
 
+import org.javatuples.Pair;
 import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 
 
 public class AppMain {
     public static void main(String[] args) {
-//        MyRepository repository = new MyRepository();
-    
-//        repository.getValueObs()
-//                .map(s -> s.length())
-//                .map(value -> value * value)
-//                .map(result -> "result " + result);
-
-//        Observable.just("12", "123", "1234")
-        String[] values = new String[]{"12", "123", "1234", "12345"};
-        Observable.from(values)
-                .map(check -> {
-                    if(check.equals("1234")){
-                        Long nn = System.nanoTime();
-                        throw new RuntimeException("error:"+nn.toString());
-                    }else{
-                        return check;
-                    }
-                })
-                .map(value -> value.length())
-                .map(length -> length * length)
-                .map(multiply -> "result " + multiply)
+        EmployeeService employeeService = new EmployeeService();
+        employeeService.getAllEmployee()
                 .subscribe(
-                        value -> {
-                            Long nn = System.nanoTime();
-                            System.out.println(value+":"+ nn.toString());
-                        },
-                        throwable -> System.err.println("error : "+ throwable.getMessage()),
-                        () -> System.out.println("complete")
+                        pair -> System.out.println(pair.getValue0().getName()+ " " + pair.getValue1().size())
                 );
 
 
-//        Subscription subscription = valueObs.subscribe(
-//                System.out::println,
-//                Throwable::printStackTrace,
-//                () -> System.out.println("complete"));
+    }
+}
 
+class EmployeeService {
+    private EmployeeRepository employeeRepository = new EmployeeRepository();
+    private AddressRepository addressRepository = new AddressRepository();
 
+    public Observable<Pair<Employee, List<Address>>> getAllEmployee() {
+       return employeeRepository.list()
+               .flatMap(
+                       employee -> addressRepository.getByEmployeeId(employee.getId())
+                       .toList()
+                       .map(addresses -> Pair.with(employee, addresses))
+               );
     }
 }
 
@@ -77,6 +55,14 @@ class AddressRepository {
                 new Address(3L, "78/67", "add1 of emp3"),
                 new Address(3L, "79/67", "add2 of emp3"),
                 new Address(3L, "70/67", "add3 of emp3")));
+    }
+
+    public Map<Long, List<Address>> getAddresses() {
+        return addresses;
+    }
+
+    public Observable<Address> getByEmployeeId(Long id) {
+        return Observable.from(addresses.get(id));
     }
 }
 
