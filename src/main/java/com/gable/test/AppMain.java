@@ -24,6 +24,7 @@ class EmployeeService {
 
     public Observable<Pair<Employee, List<Address>>> getAllEmployee() {
        return employeeRepository.list()
+               .doOnNext(emp ->System.out.println("do on employee name " + emp.getName()))
                .flatMap(
                        employee -> addressRepository.getByEmployeeId(employee.getId())
                        .toList()
